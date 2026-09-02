@@ -72,6 +72,21 @@ DEFAULT_DATASET_FILE = "small.jsonl"
 CHUNK_SIZE = 10  # lines per ingestion chunk
 
 
+def parse_conv_indices(spec: str) -> list[int]:
+    """Parse a conversation spec like '0-69' or '9,11,12' into a list of indices."""
+    indices: list[int] = []
+    for part in spec.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if "-" in part:
+            start, end = part.split("-", 1)
+            indices.extend(range(int(start), int(end) + 1))
+        else:
+            indices.append(int(part))
+    return indices
+
+
 # ===============================================================================
 # DATASET LOADING
 # ===============================================================================
@@ -411,7 +426,7 @@ async def async_main() -> None:
     logger = setup_logging("clongeval", debug=args.debug)
 
     cutoffs = [int(c) for c in args.top_k_cutoffs.split(",")]
-    conv_indices = [int(c) for c in args.conversations.split(",")]
+    conv_indices = parse_conv_indices(args.conversations)
 
     run_id = uuid.uuid4().hex[:8]
     output_dir = os.path.join(args.output_dir, f"predicted_{args.project_name}")
