@@ -201,6 +201,16 @@ mkdir -p datasets/clongeval
 # Place small.jsonl in datasets/clongeval/
 ```
 
+### Additional Dependencies
+
+The Chinese LLM provider configs (`configs/qwen.yaml`, `configs/zhipu.yaml`, `configs/moonshot.yaml`) use [fastembed](https://github.com/qdrant/fastembed) with `BAAI/bge-small-zh-v1.5` for local Chinese embeddings. Install it with:
+
+```bash
+pip install fastembed
+```
+
+This is only needed when using the Chinese LLM configs for the Mem0 OSS server. The benchmark scripts themselves have no extra dependencies beyond `requirements.txt`.
+
 ## Results
 
 ### Mem0 Platform
