@@ -31,12 +31,12 @@ class LLMClient:
     """Async LLM client with retry logic and rate limiting.
 
     Supports OpenAI, Anthropic, Azure OpenAI, and Chinese domestic providers
-    (Qwen, Zhipu, Moonshot). For OpenAI-compatible APIs (e.g., vLLM, Parasail),
+    (Qwen, Zhipu, Moonshot, DeepSeek). For OpenAI-compatible APIs (e.g., vLLM, Parasail),
     set provider="openai" with a custom base_url.
 
     Args:
         model: Model identifier (e.g., "gpt-4o", "qwen-plus", "glm-4-plus").
-        provider: One of "openai", "anthropic", "azure", "qwen", "zhipu", "moonshot".
+        provider: One of "openai", "anthropic", "azure", "qwen", "zhipu", "moonshot", "deepseek".
         api_key: API key. Falls back to provider-specific env vars.
         base_url: Custom base URL (OpenAI-compatible providers).
         max_retries: Maximum retry attempts per call.
@@ -82,6 +82,12 @@ class LLMClient:
             self._init_openai(
                 api_key or os.getenv("MOONSHOT_API_KEY"),
                 base_url or "https://api.moonshot.cn/v1",
+                timeout, **kwargs,
+            )
+        elif self.provider == "deepseek":
+            self._init_openai(
+                api_key or os.getenv("DEEPSEEK_API_KEY"),
+                base_url or "https://api.deepseek.com/v1",
                 timeout, **kwargs,
             )
         else:

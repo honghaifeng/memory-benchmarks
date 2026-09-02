@@ -163,6 +163,7 @@ See `configs/` for examples:
 - `configs/qwen.yaml` — Qwen (Alibaba Cloud DashScope, Chinese embedding)
 - `configs/zhipu.yaml` — Zhipu AI / GLM (Chinese embedding)
 - `configs/moonshot.yaml` — Moonshot / Kimi (Chinese embedding)
+- `configs/deepseek.yaml` — DeepSeek (Chinese embedding)
 
 ### Chinese LLM Providers
 
@@ -173,8 +174,9 @@ The benchmark supports Chinese domestic LLMs for running CLongEval and other ben
 | **Qwen** (DashScope) | `DASHSCOPE_API_KEY` or `QWEN_API_KEY` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` |
 | **Zhipu** (GLM) | `ZHIPU_API_KEY` | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-plus` |
 | **Moonshot** (Kimi) | `MOONSHOT_API_KEY` | `https://api.moonshot.cn/v1` | `kimi-k3` |
+| **DeepSeek** | `DEEPSEEK_API_KEY` | `https://api.deepseek.com/v1` | `deepseek-chat` |
 
-All three providers use OpenAI-compatible APIs and work with both the answerer/judge LLM and the Mem0 OSS extraction LLM (via config YAML). Chinese embedding models (`BAAI/bge-small-zh-v1.5`) are used by default in their config files.
+All four providers use OpenAI-compatible APIs and work with both the answerer/judge LLM and the Mem0 OSS extraction LLM (via config YAML). Chinese embedding models (`BAAI/bge-small-zh-v1.5`) are used by default in their config files.
 
 **Running CLongEval with a Chinese LLM:**
 
@@ -204,6 +206,15 @@ python -m benchmarks.clongeval.run \
   --provider moonshot \
   --answerer-model kimi-k3 \
   --judge-model kimi-k3 \
+  --conversations 0
+
+# DeepSeek
+export DEEPSEEK_API_KEY=sk-your-key
+python -m benchmarks.clongeval.run \
+  --project-name clongeval-deepseek \
+  --provider deepseek \
+  --answerer-model deepseek-chat \
+  --judge-model deepseek-chat \
   --conversations 0
 ```
 

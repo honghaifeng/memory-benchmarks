@@ -397,7 +397,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--project-name", required=True, help="Name for this eval run")
     parser.add_argument("--answerer-model", default="gpt-4o", help="Model for answer generation")
     parser.add_argument("--judge-model", default="gpt-4o", help="Model for judging")
-    parser.add_argument("--provider", default="openai", help="LLM provider (openai, qwen, zhipu, moonshot, anthropic, azure)")
+    parser.add_argument("--provider", default="openai", help="LLM provider (openai, qwen, zhipu, moonshot, deepseek, anthropic, azure)")
     parser.add_argument("--judge-provider", default=None, help="Judge provider (defaults to --provider)")
     parser.add_argument("--conversations", default="0", help="Comma-separated conversation indices")
     parser.add_argument("--top-k", type=int, default=200, help="Number of search results to retrieve")

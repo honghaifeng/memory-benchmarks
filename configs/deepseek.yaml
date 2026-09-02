@@ -1,0 +1,18 @@
+# DeepSeek configuration
+# Set DEEPSEEK_API_KEY in .env
+
+version: "v1.1"
+
+llm:
+  provider: openai
+  config:
+    model: deepseek-chat
+    temperature: 0.1
+    openai_base_url: "https://api.deepseek.com/v1"
+    api_key: ""
+
+embedder:
+  provider: fastembed
+  config:
+    model: BAAI/bge-small-zh-v1.5
+    embedding_dims: 512
