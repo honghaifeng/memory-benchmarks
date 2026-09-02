@@ -74,7 +74,7 @@ def analyze(path: Path) -> dict:
     for cutoff in ["top_10", "top_20", "top_50", "top_200"]:
         if cutoff not in metrics:
             continue
-        incorrect = [e for e in evals if e.get("cutoff_results", {}).get(cutoff, {}).get("judgment") == "INCORRECT"]
+        incorrect = [e for e in evals if e.get("cutoff_results", {}).get(cutoff, {}).get("judgment") in ("WRONG", "INCORRECT")]
         buckets = Counter(classify_error(e, cutoff) for e in incorrect)
         cat_counter = Counter(e.get("category_name", "?") for e in incorrect)
         summary[f"errors_{cutoff}"] = {

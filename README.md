@@ -448,6 +448,57 @@ LongMemEval results using the self-hosted Mem0 OSS pipeline with different LLMs 
 
 Full per-question evaluation results are available in [`results/platform/`](results/platform/) and [`results/oss/`](results/oss/).
 
+### CLongEval (Chinese Benchmark)
+
+Full CLongEval results (all 70 conversations, 358 questions) using the self-hosted Mem0 OSS pipeline with Chinese LLMs as the answerer and judge. All runs share the same setup:
+
+- **Mem0 OSS** with the v1.1 algorithm, Qwen (`qwen-plus`) for fact extraction, and `BAAI/bge-small-zh-v1.5` (512-dim) for Chinese embeddings
+- Each model is used as both the answerer and the judge for its own run
+- Evaluated on the [CLongEval](https://github.com/OpenLMLab/CLongEval) Chinese test set
+
+#### Overall accuracy by retrieval depth
+
+| Model | Top 10 | Top 20 | **Top 50** | Top 200 |
+|-------|--------|--------|-----------|---------|
+| **DeepSeek** (`deepseek-chat`) | 70.7% (253/358) | 81.3% (291/358) | **80.7%** (289/358) | 81.3% (291/358) |
+| **Qwen** (`qwen-plus`) | 69.8% (250/358) | 78.2% (280/358) | **78.2%** (280/358) | 77.9% (279/358) |
+| **Zhipu** (`glm-4-plus`) | 67.0% (240/358) | 73.5% (263/358) | **74.9%** (268/358) | 72.3% (259/358) |
+
+#### Breakdown by question type (Top 50)
+
+| Model | single-hop | multi-hop | temporal | conversation-understanding |
+|-------|-----------|-----------|----------|---------------------------|
+| **DeepSeek** | 74.9% | **91.5%** | **90.0%** | **89.7%** |
+| **Qwen** | **75.3%** | 82.9% | 80.0% | 84.6% |
+| **Zhipu** | 73.1% | 79.3% | 60.0% | 79.5% |
+
+#### Error analysis (Top 50)
+
+| Error bucket | DeepSeek | Qwen | Zhipu |
+|--------------|----------|------|-------|
+| Retrieval failure (relevant memory not in top-k) | 67/69 (97%) | 75/78 (96%) | 82/90 (91%) |
+| Honest refusal (correctly says "not recorded") | 0 | 1 | 3 |
+| Fabrication (answer contradicts memory) | 1 | 1 | 1 |
+| Incomplete answer | 0 | 0 | 1 |
+| Other | 1 | 1 | 3 |
+| **Total wrong** | **69** | **78** | **90** |
+
+#### Key findings
+
+1. **DeepSeek leads overall (80.7%)** with a strong advantage in multi-hop reasoning (91.5%) and temporal reasoning (90.0%), consistent with its strong Chinese reasoning capability.
+2. **Retrieval is the bottleneck for all models** — 91–97% of errors come from the relevant memory not being retrieved in the top-k, not from answer generation. This points to the v1.1 retrieval + 512-dim Chinese embedding as the main improvement target.
+3. **Fabrication is rare** (1 per model), confirming the answer-generation stage is reliable once the right memory is retrieved.
+4. **Zhipu is the most conservative** — it has the most honest refusals (3) but also the lowest overall score (74.9%), and notably weak temporal reasoning (60.0%).
+5. **Qwen is the most balanced** — best single-hop (75.3%) with solid multi-hop (82.9%), but trails DeepSeek on complex reasoning.
+
+Full per-question results (including retrieved memories and judge reasoning) are in [`results/clongeval/`](results/clongeval/). Run the analyzer to reproduce this summary:
+
+```bash
+python3 scripts/analyze_clongeval.py results/clongeval/clongeval_results_20260903_*.json
+```
+
+> **Note on Moonshot:** a full Moonshot (`kimi-k3`) run was started but could not complete because the account enforces an organization-level concurrency limit of 1 (HTTP 429). A 6-conversation smoke test scored 85.7% (12/14) at Top 50. The `Kimi-Api-Version: 2025-07-18` request header is required for `kimi-k3` and is already set in `llm_client.py`.
+
 ## A Note on Benchmark Scores
 
 **Benchmark scores are not absolute numbers.** They depend heavily on:

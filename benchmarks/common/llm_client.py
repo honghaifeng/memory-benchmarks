@@ -82,7 +82,9 @@ class LLMClient:
             self._init_openai(
                 api_key or os.getenv("MOONSHOT_API_KEY"),
                 base_url or "https://api.moonshot.cn/v1",
-                timeout, **kwargs,
+                timeout,
+                default_headers={"Kimi-Api-Version": "2025-07-18"},
+                **kwargs,
             )
         elif self.provider == "deepseek":
             self._init_openai(
@@ -134,7 +136,7 @@ class LLMClient:
             return token_matches[-1] == "yes"
 
         return text.lower().startswith("yes")
-    def _init_openai(self, api_key: str | None, base_url: str | None, timeout: float, **kwargs: Any) -> None:
+    def _init_openai(self, api_key: str | None, base_url: str | None, timeout: float, default_headers: dict[str, str] | None = None, **kwargs: Any) -> None:
         import openai
         client_kwargs: dict[str, Any] = {
             "timeout": openai.Timeout(timeout, connect=10.0),
@@ -143,6 +145,8 @@ class LLMClient:
             client_kwargs["api_key"] = api_key
         if base_url:
             client_kwargs["base_url"] = base_url
+        if default_headers:
+            client_kwargs["default_headers"] = default_headers
         self._client = openai.AsyncOpenAI(**client_kwargs)
 
     def _init_azure(self, api_key: str | None, timeout: float, **kwargs: Any) -> None:
