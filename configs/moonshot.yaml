@@ -1,0 +1,17 @@
+# Moonshot AI (Kimi) configuration
+# Set MOONSHOT_API_KEY in .env
+# Note: kimi-k3 is a reasoning model — temperature must be 1.0, top_p must be 0.95
+
+version: "v1.1"
+
+llm:
+  provider: moonshot
+  config:
+    model: kimi-k3
+    temperature: 1.0
+    top_p: 0.95
+
+embedder:
+  provider: fastembed
+  config:
+    model: BAAI/bge-small-zh-v1.5

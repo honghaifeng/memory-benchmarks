@@ -1,0 +1,15 @@
+# Zhipu AI (GLM) configuration
+# Set ZHIPU_API_KEY in .env
+
+version: "v1.1"
+
+llm:
+  provider: zhipu
+  config:
+    model: glm-4-plus
+    temperature: 0.1
+
+embedder:
+  provider: fastembed
+  config:
+    model: BAAI/bge-small-zh-v1.5

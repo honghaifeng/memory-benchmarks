@@ -1,0 +1,15 @@
+# Qwen (Alibaba Cloud DashScope) configuration
+# Set DASHSCOPE_API_KEY or QWEN_API_KEY in .env
+
+version: "v1.1"
+
+llm:
+  provider: qwen
+  config:
+    model: qwen-plus
+    temperature: 0.1
+
+embedder:
+  provider: fastembed
+  config:
+    model: BAAI/bge-small-zh-v1.5

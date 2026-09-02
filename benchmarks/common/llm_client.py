@@ -30,12 +30,13 @@ T = TypeVar("T")
 class LLMClient:
     """Async LLM client with retry logic and rate limiting.
 
-    Supports OpenAI, Anthropic, and Azure OpenAI providers. For OpenAI-compatible
-    APIs (e.g., vLLM, Parasail), set provider="openai" with a custom base_url.
+    Supports OpenAI, Anthropic, Azure OpenAI, and Chinese domestic providers
+    (Qwen, Zhipu, Moonshot). For OpenAI-compatible APIs (e.g., vLLM, Parasail),
+    set provider="openai" with a custom base_url.
 
     Args:
-        model: Model identifier (e.g., "gpt-4o", "claude-sonnet-4-20250514").
-        provider: One of "openai", "anthropic", "azure".
+        model: Model identifier (e.g., "gpt-4o", "qwen-plus", "glm-4-plus").
+        provider: One of "openai", "anthropic", "azure", "qwen", "zhipu", "moonshot".
         api_key: API key. Falls back to provider-specific env vars.
         base_url: Custom base URL (OpenAI-compatible providers).
         max_retries: Maximum retry attempts per call.
@@ -65,6 +66,24 @@ class LLMClient:
             self._init_anthropic(api_key)
         elif self.provider == "azure":
             self._init_azure(api_key, timeout, **kwargs)
+        elif self.provider == "qwen":
+            self._init_openai(
+                api_key or os.getenv("DASHSCOPE_API_KEY") or os.getenv("QWEN_API_KEY"),
+                base_url or "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                timeout, **kwargs,
+            )
+        elif self.provider == "zhipu":
+            self._init_openai(
+                api_key or os.getenv("ZHIPU_API_KEY"),
+                base_url or "https://open.bigmodel.cn/api/paas/v4",
+                timeout, **kwargs,
+            )
+        elif self.provider == "moonshot":
+            self._init_openai(
+                api_key or os.getenv("MOONSHOT_API_KEY"),
+                base_url or "https://api.moonshot.cn/v1",
+                timeout, **kwargs,
+            )
         else:
             self._init_openai(api_key, base_url, timeout, **kwargs)
 

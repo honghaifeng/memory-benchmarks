@@ -9,6 +9,7 @@ Open-source evaluation suite to run benchmarks on memory-augmented LLM systems. 
 | **LOCOMO** | 10 multi-session dialogues | ~300 | Factual recall, temporal reasoning, multi-hop inference |
 | **LongMemEval** | 500 diverse questions, 6 types | 500 | Long-term memory across information extraction, temporal, and multi-session reasoning |
 | **BEAM** | 100 conversations per size bucket (100K–10M tokens) | 2,000+ | Real-world memory retrieval across 10 memory ability types |
+| **CLongEval** | 70 conversations, diverse Chinese QA | ~2,800 | Chinese long-term memory: temporal reasoning, multi-hop, entity tracking |
 
 ## Quick Start
 
@@ -46,6 +47,13 @@ python -m benchmarks.beam.run \
   --backend cloud \
   --mem0-api-key $MEM0_API_KEY \
   --chat-sizes 100K --conversations 0-9
+
+# CLongEval (Chinese benchmark — 70 conversations)
+python -m benchmarks.clongeval.run \
+  --project-name my-first-test \
+  --backend cloud \
+  --mem0-api-key $MEM0_API_KEY \
+  --conversations 0
 ```
 
 ### Option B: Mem0 OSS (Self-Hosted)
@@ -72,6 +80,9 @@ python -m benchmarks.longmemeval.run --project-name my-first-test --all-question
 
 # BEAM (configurable size)
 python -m benchmarks.beam.run --project-name my-first-test --chat-sizes 100K --conversations 0-9
+
+# CLongEval (Chinese benchmark — 70 conversations)
+python -m benchmarks.clongeval.run --project-name my-first-test --conversations 0
 ```
 
 By default, the OSS server uses OpenAI for fact extraction (`gpt-4o-mini`) and embeddings (`text-embedding-3-small`). See [Custom Models](#custom-models) for using Azure, Ollama, or other providers.
@@ -108,7 +119,7 @@ All benchmarks accept these common flags:
 --project-name NAME        Run identifier (required)
 --answerer-model MODEL     LLM for answer generation (default: gpt-4o)
 --judge-model MODEL        LLM for judging (default: gpt-4o)
---provider PROVIDER        LLM provider: openai, anthropic, azure (default: openai)
+--provider PROVIDER        LLM provider: openai, anthropic, azure, qwen, zhipu, moonshot (default: openai)
 --top-k N                  Retrieved memories count (default: 200)
 --top-k-cutoffs LIST       Evaluate at multiple cutoffs (default: 10,20,50,200)
 --predict-only             Stop after search, skip answer+judge
@@ -149,6 +160,46 @@ See `configs/` for examples:
 - `configs/openai.yaml` — OpenAI (default)
 - `configs/azure-openai.yaml` — Azure OpenAI
 - `configs/ollama.yaml` — Fully local with Ollama (no API keys)
+- `configs/qwen.yaml` — Qwen (Alibaba Cloud DashScope, Chinese embedding)
+- `configs/zhipu.yaml` — Zhipu AI / GLM (Chinese embedding)
+- `configs/moonshot.yaml` — Moonshot / Kimi (Chinese embedding)
+
+### Chinese LLM Providers
+
+The benchmark supports Chinese domestic LLMs for running CLongEval and other benchmarks with Chinese-optimized models:
+
+| Provider | Env Var | Base URL | Default Model |
+|----------|---------|----------|---------------|
+| **Qwen** (DashScope) | `DASHSCOPE_API_KEY` or `QWEN_API_KEY` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` |
+| **Zhipu** (GLM) | `ZHIPU_API_KEY` | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-plus` |
+| **Moonshot** (Kimi) | `MOONSHOT_API_KEY` | `https://api.moonshot.cn/v1` | `kimi-k3` |
+
+All three providers use OpenAI-compatible APIs and work with both the answerer/judge LLM and the Mem0 OSS extraction LLM (via config YAML). Chinese embedding models (`BAAI/bge-small-zh-v1.5`) are used by default in their config files.
+
+**Running CLongEval with Qwen:**
+
+```bash
+export DASHSCOPE_API_KEY=sk-your-key
+
+python -m benchmarks.clongeval.run \
+  --project-name clongeval-qwen \
+  --provider qwen \
+  --answerer-model qwen-plus \
+  --judge-model qwen-plus \
+  --conversations 0
+```
+
+### CLongEval Dataset
+
+CLongEval is a Chinese long-conversation memory evaluation benchmark with 70 conversation groups and ~2,800 QA pairs testing temporal reasoning, multi-hop inference, and entity tracking in Chinese.
+
+Download the dataset from [CLongEval GitHub](https://github.com/OpenLMLab/CLongEval) and place `small.jsonl` in `datasets/clongeval/`:
+
+```bash
+mkdir -p datasets/clongeval
+# Download from https://github.com/OpenLMLab/CLongEval
+# Place small.jsonl in datasets/clongeval/
+```
 
 ## Results
 
@@ -268,7 +319,8 @@ memory-benchmarks/
 │   ├── common/              Shared: Mem0 client, LLM client, metrics, utils
 │   ├── locomo/              LOCOMO benchmark
 │   ├── longmemeval/         LongMemEval benchmark
-│   └── beam/                BEAM benchmark
+│   ├── beam/                BEAM benchmark
+│   └── clongeval/           CLongEval Chinese benchmark
 ├── configs/                 Example Mem0 server configs
 ├── docker/mem0/             Mem0 server (Dockerfile + FastAPI app)
 ├── docker-compose.yml       One-command setup: Mem0 + Qdrant
