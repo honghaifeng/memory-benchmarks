@@ -95,10 +95,16 @@ class LLMClient:
         return {"max_tokens": max_tokens}
 
     def _openai_chat_temperature_kwargs(self, temperature: float) -> dict[str, Any]:
-        """gpt-5 / o-series only accept the default temperature (1); omit the param for those models."""
+        """Model-specific temperature handling.
+
+        - gpt-5 / o-series: only accept default temperature (1); omit the param.
+        - kimi-k3 (reasoning model): only accepts temperature=1.0 and top_p=0.95.
+        """
         m = self.model.lower()
         if m.startswith(("gpt-5", "o1", "o3", "o4")):
             return {}
+        if m.startswith("kimi"):
+            return {"temperature": 1.0, "top_p": 0.95}
         return {"temperature": temperature}
 
     def _parse_yes_no_judgment(self, raw: str) -> bool:
