@@ -176,18 +176,72 @@ The benchmark supports Chinese domestic LLMs for running CLongEval and other ben
 
 All three providers use OpenAI-compatible APIs and work with both the answerer/judge LLM and the Mem0 OSS extraction LLM (via config YAML). Chinese embedding models (`BAAI/bge-small-zh-v1.5`) are used by default in their config files.
 
-**Running CLongEval with Qwen:**
+**Running CLongEval with a Chinese LLM:**
 
 ```bash
+# Qwen (Alibaba Cloud DashScope)
 export DASHSCOPE_API_KEY=sk-your-key
-
 python -m benchmarks.clongeval.run \
   --project-name clongeval-qwen \
   --provider qwen \
   --answerer-model qwen-plus \
   --judge-model qwen-plus \
   --conversations 0
+
+# Zhipu AI (GLM)
+export ZHIPU_API_KEY=your-zhipu-key
+python -m benchmarks.clongeval.run \
+  --project-name clongeval-zhipu \
+  --provider zhipu \
+  --answerer-model glm-4-plus \
+  --judge-model glm-4-plus \
+  --conversations 0
+
+# Moonshot AI (Kimi)
+export MOONSHOT_API_KEY=your-moonshot-key
+python -m benchmarks.clongeval.run \
+  --project-name clongeval-moonshot \
+  --provider moonshot \
+  --answerer-model kimi-k3 \
+  --judge-model kimi-k3 \
+  --conversations 0
 ```
+
+**Running the full CLongEval test set (all 70 conversations):**
+
+```bash
+# Run all 70 conversation groups with Qwen
+python -m benchmarks.clongeval.run \
+  --project-name clongeval-qwen-full \
+  --provider qwen \
+  --answerer-model qwen-plus \
+  --judge-model qwen-plus \
+  --conversations 0-69
+
+# Limit questions per conversation (e.g. first 3 per group)
+python -m benchmarks.clongeval.run \
+  --project-name clongeval-qwen-3q \
+  --provider qwen \
+  --answerer-model qwen-plus \
+  --judge-model qwen-plus \
+  --conversations 0-69 \
+  --max-questions 3
+```
+
+> **Note on Moonshot rate limits:** the Moonshot API enforces a strict
+> organization-level RPM (as low as 3 requests/minute on some plans). When
+> running large test sets, pass `--rpm 1` to space requests out and avoid
+> repeated 429 errors:
+>
+> ```bash
+> python -m benchmarks.clongeval.run \
+>   --project-name clongeval-moonshot-full \
+>   --provider moonshot \
+>   --answerer-model kimi-k3 \
+>   --judge-model kimi-k3 \
+>   --conversations 0-69 \
+>   --rpm 1
+> ```
 
 ### CLongEval Dataset
 
@@ -209,7 +263,79 @@ The Chinese LLM provider configs (`configs/qwen.yaml`, `configs/zhipu.yaml`, `co
 pip install fastembed
 ```
 
-This is only needed when using the Chinese LLM configs for the Mem0 OSS server. The benchmark scripts themselves have no extra dependencies beyond `requirements.txt`.
+The benchmark scripts also use [aiolimiter](https://github.com/martinthoma/aiolimiter) for async rate limiting. Install it with:
+
+```bash
+pip install aiolimiter
+```
+
+Install all benchmark dependencies at once:
+
+```bash
+pip install -r requirements.txt fastembed aiolimiter
+```
+
+These are only needed when using the Chinese LLM configs for the Mem0 OSS server and running the benchmark scripts. The benchmark scripts themselves have no extra dependencies beyond `requirements.txt`.
+
+### Docker Setup for Chinese CLongEval
+
+To run CLongEval with Chinese extraction and embeddings, the Mem0 OSS server needs a custom config. The `docker-compose.yml` in this repo already mounts `./mem0-config.yaml`:
+
+```yaml
+volumes:
+  - mem0_history:/app/history
+  - ./mem0-config.yaml:/app/config.yaml:ro   # already enabled in this repo
+```
+
+**Step 1**: Create `mem0-config.yaml` from a Chinese provider config (this file is gitignored — it holds your API key):
+
+```bash
+cp configs/qwen.yaml mem0-config.yaml
+# or: cp configs/zhipu.yaml mem0-config.yaml
+# or: cp configs/moonshot.yaml mem0-config.yaml
+```
+
+**Step 2**: Edit `mem0-config.yaml` and add your API key:
+
+```yaml
+llm:
+  provider: openai            # Qwen/Zhipu/Moonshot all use OpenAI-compatible APIs
+  config:
+    model: qwen-plus          # or glm-4-plus / kimi-k3
+    temperature: 0.1
+    openai_base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    api_key: "your-api-key"   # <-- put your key here
+
+embedder:
+  provider: fastembed
+  config:
+    model: BAAI/bge-small-zh-v1.5
+    embedding_dims: 512
+```
+
+**Step 3**: Start the server:
+
+```bash
+docker compose up -d
+# Mem0 server: http://localhost:8888
+# Qdrant:      http://localhost:6333
+```
+
+**Step 4**: Run the benchmark against the local server:
+
+```bash
+python -m benchmarks.clongeval.run \
+  --project-name clongeval-qwen \
+  --provider qwen \
+  --answerer-model qwen-plus \
+  --judge-model qwen-plus \
+  --conversations 0
+```
+
+> **Note:** the Mem0 server uses Qwen for fact extraction (via `mem0-config.yaml`),
+> while the benchmark's `--provider`/`--answerer-model`/`--judge-model` control the
+> answer-generation and judging LLM. You can mix them (e.g. Qwen extraction +
+> Zhipu answerer/judge) to compare models fairly.
 
 ## Results
 

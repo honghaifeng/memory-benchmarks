@@ -231,14 +231,15 @@ def search_memories(req: SearchRequest):
     """Search memories by semantic similarity + BM25 + entity boost."""
     mem = _get_memory()
     params: dict[str, Any] = {"limit": req.limit}
+    filters: dict[str, Any] = dict(req.filters or {})
     if req.user_id:
-        params["user_id"] = req.user_id
+        filters["user_id"] = req.user_id
     if req.agent_id:
-        params["agent_id"] = req.agent_id
+        filters["agent_id"] = req.agent_id
     if req.run_id:
-        params["run_id"] = req.run_id
-    if req.filters:
-        params["filters"] = req.filters
+        filters["run_id"] = req.run_id
+    if filters:
+        params["filters"] = filters
     if req.rerank:
         params["rerank"] = True
 
