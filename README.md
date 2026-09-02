@@ -456,6 +456,25 @@ Full CLongEval results (all 70 conversations, 358 questions) using the self-host
 - Each model is used as both the answerer and the judge for its own run
 - Evaluated on the [CLongEval](https://github.com/OpenLMLab/CLongEval) Chinese test set
 
+#### What do Top 10 / 20 / 50 / 200 mean?
+
+These are **retrieval depths** — how many of the most similar memories the system retrieves from the vector store and passes to the LLM when answering a question.
+
+| Parameter | Meaning |
+|-----------|---------|
+| **Top 10** | Retrieve the 10 most similar memories |
+| **Top 20** | Retrieve 20 |
+| **Top 50** | Retrieve 50 |
+| **Top 200** | Retrieve 200 |
+
+![top-k retrieval](assets/topk-retrieval.svg)
+
+The four numbers reveal **retrieval quality**, not just final accuracy:
+
+- **High Top 10** → relevant memories rank at the top; retrieval ordering is good.
+- **Low Top 10 but high Top 200** → relevant memories exist but rank too low; retrieval needs improvement (this is exactly the bottleneck we found — 91–97% of errors come from the relevant memory not making it into the top-k).
+- **k is not always better** — too small misses relevant memories, too large introduces noise that can mislead the LLM (e.g. Zhipu drops from 74.9% at Top 50 to 72.3% at Top 200).
+
 #### Overall accuracy by retrieval depth
 
 | Model | Top 10 | Top 20 | **Top 50** | Top 200 |
@@ -463,6 +482,19 @@ Full CLongEval results (all 70 conversations, 358 questions) using the self-host
 | **DeepSeek** (`deepseek-chat`) | 70.7% (253/358) | 81.3% (291/358) | **80.7%** (289/358) | 81.3% (291/358) |
 | **Qwen** (`qwen-plus`) | 69.8% (250/358) | 78.2% (280/358) | **78.2%** (280/358) | 77.9% (279/358) |
 | **Zhipu** (`glm-4-plus`) | 67.0% (240/358) | 73.5% (263/358) | **74.9%** (268/358) | 72.3% (259/358) |
+
+#### What do the question types mean?
+
+CLongEval classifies each of the 358 questions into four types:
+
+| Type | Meaning | Example |
+|------|---------|---------|
+| **single-hop** | Answerable from a single memory | "What coffee did I say I liked?" |
+| **multi-hop** | Requires combining multiple memories and reasoning | "Is the café I booked with Xiao Li far from home?" (find the café, then its distance) |
+| **temporal** | Requires reasoning about time order / dates / durations | "Did I buy the coffee machine before or after meeting Xiao Li?" |
+| **conversation-understanding** | Requires understanding the whole conversation context (references, implications, summaries) | "Did I change my mind by the end of this conversation?" |
+
+![CLongEval question types](assets/clongeval-question-types.svg)
 
 #### Breakdown by question type (Top 50)
 
